@@ -110,7 +110,7 @@ button:hover { background: #c0392b; transform: scale(1.05); }
     <form action="cetak.php" method="POST">
       <input type="hidden" name="jenis" value="obat">
       <input type="hidden" name="next" value="<?= $nextObat ?>">
-      <button type="submit">AMBIL NOMOR OBAT</button>
+      <button type="submit">KLIK DISINI 1X AMBIL NOMOR OBAT</button>
     </form>
     <div class="waiting">Menunggu: <?= $countObat ?> pasien</div>
   </div>
@@ -122,7 +122,7 @@ button:hover { background: #c0392b; transform: scale(1.05); }
     <form action="cetak.php" method="POST">
       <input type="hidden" name="jenis" value="racikan">
       <input type="hidden" name="next" value="<?= $nextRacikan ?>">
-      <button type="submit">AMBIL NOMOR RACIKAN</button>
+      <button type="submit">KLIK DISINI 1X AMBIL NOMOR RACIKAN</button>
     </form>
     <div class="waiting">Menunggu: <?= $countRacikan ?> pasien</div>
   </div>
