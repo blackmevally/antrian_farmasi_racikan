@@ -59,6 +59,10 @@ h1 {
   box-shadow: 0 8px 20px rgba(0,0,0,0.3);
   width: 320px;
   padding: 30px;
+  transition: transform 0.3s ease;
+}
+.card:hover {
+  transform: scale(1.02);
 }
 .card h2 {
   margin: 0;
@@ -89,6 +93,7 @@ button:hover { background: #c0392b; transform: scale(1.05); }
   font-size: 18px;
   margin-top: 10px;
   color: #f39c12;
+  transition: transform 0.3s ease;
 }
 .footer {
   position: absolute;
@@ -112,7 +117,7 @@ button:hover { background: #c0392b; transform: scale(1.05); }
       <input type="hidden" name="next" value="<?= $nextObat ?>">
       <button type="submit">KLIK DISINI 1X AMBIL NOMOR OBAT</button>
     </form>
-    <div class="waiting">Menunggu: <?= $countObat ?> pasien</div>
+    <div class="waiting" id="waitObat">Menunggu: <?= $countObat ?> pasien</div>
   </div>
 
   <!-- KOTAK ANTRIAN RACIKAN -->
@@ -124,11 +129,45 @@ button:hover { background: #c0392b; transform: scale(1.05); }
       <input type="hidden" name="next" value="<?= $nextRacikan ?>">
       <button type="submit">KLIK DISINI 1X AMBIL NOMOR RACIKAN</button>
     </form>
-    <div class="waiting">Menunggu: <?= $countRacikan ?> pasien</div>
+    <div class="waiting" id="waitRacikan">Menunggu: <?= $countRacikan ?> pasien</div>
   </div>
 
 </div>
 
 <div class="footer">RSU Permata Medika Kebumen - Sistem Antrian Farmasi</div>
+
+<!-- ========================= -->
+<!--  REALTIME AUTO REFRESH   -->
+<!-- ========================= -->
+<script>
+async function updateWaiting() {
+  try {
+    const res = await fetch("../config/get_waiting.php");
+    const data = await res.json();
+
+    // Update teks
+    const elObat = document.getElementById("waitObat");
+    const elRacikan = document.getElementById("waitRacikan");
+
+    elObat.textContent = "Menunggu: " + data.obat + " pasien";
+    elRacikan.textContent = "Menunggu: " + data.racikan + " pasien";
+
+    // Efek animasi heartbeat halus setiap kali berubah
+    elObat.style.transform = "scale(1.1)";
+    elRacikan.style.transform = "scale(1.1)";
+    setTimeout(() => {
+      elObat.style.transform = "scale(1)";
+      elRacikan.style.transform = "scale(1)";
+    }, 400);
+  } catch (err) {
+    console.error("Gagal update jumlah antrian:", err);
+  }
+}
+
+// Jalankan pertama kali & update tiap 5 detik
+updateWaiting();
+setInterval(updateWaiting, 5000);
+</script>
+
 </body>
 </html>
