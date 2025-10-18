@@ -20,7 +20,7 @@ body {
     background-attachment: fixed;
 }
 
-/* Tambahkan background gambar RS dengan opasitas 20% */
+/* Background RS */
 body::before {
     content: "";
     background: url("../config/assets/bg_rsu.png") no-repeat center center fixed;
@@ -30,7 +30,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    opacity: 0.1;
+    opacity: 0.12;
     z-index: -1;
 }
 
@@ -78,9 +78,7 @@ body::before {
     width: 85%;
     transition: transform 0.2s ease;
 }
-.panel-box:hover {
-    transform: scale(1.02);
-}
+.panel-box:hover { transform: scale(1.02); }
 
 .panel-title {
     font-size: 32px;
@@ -155,6 +153,18 @@ body::before {
     font-weight: bold;
     z-index: 999;
 }
+
+/* Heartbeat + glow */
+@keyframes heartbeat {
+    0% { transform: scale(1); box-shadow: 0 0 0px rgba(255,255,255,0); }
+    25% { transform: scale(1.06); box-shadow: 0 0 25px var(--glow-color); }
+    50% { transform: scale(1); box-shadow: 0 0 0px rgba(255,255,255,0); }
+    75% { transform: scale(1.06); box-shadow: 0 0 25px var(--glow-color); }
+    100% { transform: scale(1); box-shadow: 0 0 0px rgba(255,255,255,0); }
+}
+.heartbeat {
+    animation: heartbeat 1.3s ease-in-out infinite;
+}
 </style>
 </head>
 <body>
@@ -165,7 +175,7 @@ body::before {
 
 <div class="main">
     <div class="panel">
-        <div class="panel-box">
+        <div class="panel-box" id="boxObat">
             <div class="panel-title">Antrian Obat</div>
             <div id="noObat">---</div>
             <div class="label" id="loketObat">Menunggu panggilan...</div>
@@ -173,7 +183,7 @@ body::before {
     </div>
 
     <div class="panel">
-        <div class="panel-box">
+        <div class="panel-box" id="boxRacikan">
             <div class="panel-title">Antrian Racikan</div>
             <div id="noRacikan">---</div>
             <div class="label" id="loketRacikan">Menunggu panggilan...</div>
@@ -195,16 +205,10 @@ const statusEl = document.getElementById("status");
 let suaraConfig = null;
 let voicesReady = false;
 
-// =========================
-// 1. Inisialisasi voice TTS
-// =========================
-speechSynthesis.onvoiceschanged = () => {
-    voicesReady = true;
-};
+// Inisialisasi TTS
+speechSynthesis.onvoiceschanged = () => { voicesReady = true; };
 
-// =========================
-// 2. Ambil pengaturan suara
-// =========================
+// Ambil pengaturan suara
 async function loadSuaraConfig() {
     try {
         const res = await fetch("../config/get_suara.php");
@@ -221,9 +225,7 @@ async function loadSuaraConfig() {
     }
 }
 
-// =========================
-// 3. Ubah angka ke kata
-// =========================
+// Konversi angka ke kata
 function angkaKeKata(angka) {
     const s = ["","satu","dua","tiga","empat","lima","enam","tujuh","delapan","sembilan"];
     const b = ["sepuluh","sebelas","dua belas","tiga belas","empat belas","lima belas","enam belas","tujuh belas","delapan belas","sembilan belas"];
@@ -236,13 +238,22 @@ function angkaKeKata(angka) {
     return angka;
 }
 
-// =========================
-// 4. Fungsi TTS
-// =========================
-function playVoice(template, nomor, loket) {
+// Efek heartbeat selama TTS aktif
+function startHeartbeat(boxId, color) {
+    const el = document.getElementById(boxId);
+    el.style.setProperty("--glow-color", color);
+    el.classList.add("heartbeat");
+}
+function stopHeartbeat(boxId) {
+    const el = document.getElementById(boxId);
+    el.classList.remove("heartbeat");
+}
+
+// Fungsi panggil suara dengan sinkron animasi
+function playVoiceWithEffect(template, nomor, loket, boxId, color) {
     if (!window.speechSynthesis || !suaraConfig) return;
     if (!voicesReady) {
-        setTimeout(() => playVoice(template, nomor, loket), 300);
+        setTimeout(() => playVoiceWithEffect(template, nomor, loket, boxId, color), 300);
         return;
     }
 
@@ -260,10 +271,7 @@ function playVoice(template, nomor, loket) {
         loketVoice = "loket " + angkaKeKata(loketVoice);
     }
 
-    const teks = template
-        .replace("{nomor}", nomorVoice)
-        .replace("{loket}", loketVoice);
-
+    const teks = template.replace("{nomor}", nomorVoice).replace("{loket}", loketVoice);
     const utter = new SpeechSynthesisUtterance(teks);
     utter.lang = suaraConfig.lang || "id-ID";
     utter.volume = suaraConfig.volume ?? 1;
@@ -273,28 +281,13 @@ function playVoice(template, nomor, loket) {
     const selected = voices.find(v => v.name === suaraConfig.voice);
     if (selected) utter.voice = selected;
 
-    if (speechSynthesis.speaking) {
-        setTimeout(() => playVoice(template, nomor, loket), 2000);
-        return;
-    }
+    utter.onstart = () => startHeartbeat(boxId, color);
+    utter.onend = () => stopHeartbeat(boxId);
 
     speechSynthesis.speak(utter);
 }
 
-// =========================
-// 5. Tampilan nomor smooth
-// =========================
-function updateDisplay(el, val) {
-    el.style.opacity = 0;
-    setTimeout(() => {
-        el.textContent = val;
-        el.style.opacity = 1;
-    }, 200);
-}
-
-// =========================
-// 6. SSE Real-time Update
-// =========================
+// SSE real-time update
 function updateKoneksi(ok) {
     statusEl.className = "status " + (ok ? "online" : "offline");
     statusEl.innerHTML = ok ? "🟢 Terhubung ke Server" : "🔴 Putus koneksi";
@@ -302,7 +295,6 @@ function updateKoneksi(ok) {
 
 async function startSSE() {
     await loadSuaraConfig();
-
     const sse = new EventSource("event_stream.php");
     sse.onopen = () => updateKoneksi(true);
     sse.onerror = () => updateKoneksi(false);
@@ -323,13 +315,13 @@ async function startSSE() {
         bell.play().catch(() => {});
         setTimeout(() => {
             if (isRacikan) {
-                updateDisplay(document.getElementById("noRacikan"), nomor);
+                document.getElementById("noRacikan").textContent = nomor;
                 document.getElementById("loketRacikan").textContent = "Menuju Loket " + loket;
-                playVoice(suaraConfig.template_racikan, nomor, loket);
+                playVoiceWithEffect(suaraConfig.template_racikan, nomor, loket, "boxRacikan", "#00bfff");
             } else {
-                updateDisplay(document.getElementById("noObat"), nomor);
+                document.getElementById("noObat").textContent = nomor;
                 document.getElementById("loketObat").textContent = "Menuju Loket " + loket;
-                playVoice(suaraConfig.template_obat, nomor, loket);
+                playVoiceWithEffect(suaraConfig.template_obat, nomor, loket, "boxObat", "#f1c40f");
             }
         }, 800);
 
@@ -341,9 +333,7 @@ async function startSSE() {
     });
 }
 
-// =========================
-// 7. Tombol Aktifkan Suara
-// =========================
+// Tombol aktifkan suara
 document.getElementById("btnSuara").addEventListener("click", () => {
     const dummy = new SpeechSynthesisUtterance("Inisialisasi suara...");
     dummy.lang = "id-ID";

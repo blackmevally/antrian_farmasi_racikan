@@ -1,6 +1,6 @@
 {
-    "no": "R002",
+    "no": "R005",
     "loket": "Loket 1",
     "jenis": "racikan",
-    "time": 1760745609
+    "time": 1760753211
 }
