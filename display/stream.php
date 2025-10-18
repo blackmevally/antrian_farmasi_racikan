@@ -10,19 +10,38 @@ include("../config/db.php");
 <style>
 body {
     font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(180deg, #27ae60, #1e8449);
-    color: white;
-    text-align: center;
     margin: 0;
     overflow: hidden;
+    color: white;
+    text-align: center;
+    background: rgba(39, 174, 96, 0.95);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
 }
+
+/* Tambahkan background gambar RS dengan opasitas 20% */
+body::before {
+    content: "";
+    background: url("../config/assets/bg_rsu.png") no-repeat center center fixed;
+    background-size: cover;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.1;
+    z-index: -1;
+}
+
 .header {
-    background: rgba(0,0,0,0.25);
+    background: rgba(0,0,0,0.3);
     padding: 20px;
     font-size: 42px;
     font-weight: bold;
     letter-spacing: 2px;
 }
+
 .status {
     position: fixed;
     top: 10px;
@@ -52,7 +71,7 @@ body {
 }
 
 .panel-box {
-    background: rgba(0,0,0,0.15);
+    background: rgba(0,0,0,0.25);
     border-radius: 20px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.3);
     padding: 30px 20px 40px 20px;
@@ -100,7 +119,7 @@ body {
     width: 100%;
     display: flex;
     justify-content: space-around;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.25);
     padding: 20px 0;
 }
 .loket-box {
@@ -254,7 +273,6 @@ function playVoice(template, nomor, loket) {
     const selected = voices.find(v => v.name === suaraConfig.voice);
     if (selected) utter.voice = selected;
 
-    // jika masih berbicara, tunggu
     if (speechSynthesis.speaking) {
         setTimeout(() => playVoice(template, nomor, loket), 2000);
         return;
